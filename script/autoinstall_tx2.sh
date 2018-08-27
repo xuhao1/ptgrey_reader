@@ -12,6 +12,7 @@ tar zxvf flycapture.2.11.3.121_arm64.tar.gz
 cd flycapture.2.11.3.121_arm64/include/
 sudo mkdir -p /usr/include/flycapture
 sudo cp *.h /usr/include/flycapture
+sudo ./flycap2-conf
 cd ../lib/
 sudo cp lib* /usr/lib
 sudo sed -i -e 's/0613/777/g' /etc/udev/rules.d/40-flir.rules
