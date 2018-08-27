@@ -7,6 +7,7 @@
 #include <opencv2/opencv.hpp>
 #include <ros/ros.h>
 #include <sstream>
+#include <string>
 
 void
 colorToGrey( cv::Mat& image_in, cv::Mat& image_out )
@@ -56,6 +57,7 @@ main( int argc, char** argv )
     double hue               = 0;
     double sharpness         = 0;
     double down_sample_scale = 0.75;
+    std::string topic_name = "";
     int size_x = 0, size_y = 0;
     int center_x = 0, center_y = 0;
     int cropper_x = 0, cropper_y = 0;
@@ -92,6 +94,9 @@ main( int argc, char** argv )
     std::stringstream os;
     os << serialNum;
 
+    ros::param::param<std::string>("topic_name", topic_name, "/pg_" + os.str( ));
+
+
     preprocess::PreProcess* pre;
     pre = new preprocess::PreProcess( cv::Size( size_x, size_y ),
                                       cv::Size( cropper_x, cropper_y ),
@@ -103,7 +108,7 @@ main( int argc, char** argv )
     ptgrey_reader::singleCameraReader camReader( cameraId );
 
     ros::Publisher imagePublisher
-    = nh.advertise< sensor_msgs::Image >( "/pg_" + os.str( ) + "/image_raw", 3 );
+    = nh.advertise< sensor_msgs::Image >( topic_name + "/image_raw", 3 );
     ros::Publisher imageROIPublisher;
     ros::Publisher imageGreyPublisher;
     ros::Publisher imageROIGreyPublisher;
@@ -128,15 +133,15 @@ main( int argc, char** argv )
 
     if ( is_roi )
         imageROIPublisher
-        = nh.advertise< sensor_msgs::Image >( "/pg_" + os.str( ) + "/image", 3 );
+        = nh.advertise< sensor_msgs::Image >( topic_name + "/image", 3 );
     if ( is_grey && camReader.Camera( ).isColorCamera( ) )
     {
         imageGreyPublisher
-        = nh.advertise< sensor_msgs::Image >( "/pg_" + os.str( ) + "/image_grey", 3 );
+        = nh.advertise< sensor_msgs::Image >( topic_name + "/image_grey", 3 );
 
         if ( is_roi )
             imageROIGreyPublisher
-            = nh.advertise< sensor_msgs::Image >( "/pg_" + os.str( ) + "/image_roi", 3 );
+            = nh.advertise< sensor_msgs::Image >( topic_name + "/image_roi", 3 );
     }
 
     if ( !is_cameraStarted )

@@ -1,0 +1,76 @@
+<launch>
+
+    <arg name="device_left" default = "17591764"/>
+    <arg name="device_right" default = "17532720"/>
+    <arg name="rate" default="20"/>
+
+    <node name="single_reader" pkg="ptgrey_reader" type="single_reader"
+         ns="pg_$(arg device_left)" output="screen">
+        <remap from="/image_out" to="image_raw" />
+        <remap from="/image_out_roi" to="image" />
+        <param name="is_pub" type="bool" value="true"/>
+        <param name="is_show" type="bool" value="false"/>
+        <param name="is_print" type="bool" value="true"/>        
+        <param name="serialNum" type="int" value="$(arg device_left)"/>
+        <param name="frameRate" type="double" value="$(arg rate)"/>
+        <param name="is_auto_shutter" type="bool" value="false"/>
+        <param name="shutter" type="double" value="4.5"/>
+        <param name="brightness" type="double" value="3.1"/>
+        <param name="exposure" type="double" value="0.8"/>
+        <param name="WB_red" type="int" value="550"/>
+        <param name="WB_Blue" type="int" value="810"/>
+        <param name="gain" type="double" value="18.0"/>
+        <param name="topic_name" type="string" value = "/stereo/left" />
+        <rosparam>
+            is_sync:   true
+            is_grey:   true
+            is_roi:    false
+            size_x:    1280
+            size_y:    1024
+            center_x:  640
+            center_y:  512
+            cropper_x: 1280
+            cropper_y: 1024
+            down_sample_scale: 0.5
+
+            saturation: 300
+            hue:        30
+            sharpness:  0
+        </rosparam>
+    </node>
+    <node name="single_reader2" pkg="ptgrey_reader" type="single_reader"
+         ns="pg_$(arg device_right)" output="screen">
+        <remap from="/image_out" to="image_raw" />
+        <remap from="/image_out_roi" to="image" />
+        <param name="is_pub" type="bool" value="true"/>
+        <param name="is_show" type="bool" value="false"/>
+        <param name="is_print" type="bool" value="true"/>        
+        <param name="serialNum" type="int" value="$(arg device_right)"/>
+        <param name="frameRate" type="double" value="$(arg rate)"/>
+        <param name="is_auto_shutter" type="bool" value="false"/>
+        <param name="shutter" type="double" value="4.5"/>
+        <param name="brightness" type="double" value="3.1"/>
+        <param name="exposure" type="double" value="0.8"/>
+        <param name="WB_red" type="int" value="550"/>
+        <param name="WB_Blue" type="int" value="810"/>
+        <param name="gain" type="double" value="18.0"/>
+        <param name="topic_name" type="string" value = "/stereo/right" />
+        <rosparam>
+            is_sync:   true
+            is_grey:   true
+            is_roi:    false
+            size_x:    1280
+            size_y:    1024
+            center_x:  640
+            center_y:  512
+            cropper_x: 1280
+            cropper_y: 1024
+            down_sample_scale: 0.5
+
+            saturation: 300
+            hue:        30
+            sharpness:  0
+        </rosparam>
+    </node>
+
+</launch>
