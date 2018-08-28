@@ -8,7 +8,7 @@
             # common setting and default individual settings
             cam_cnt: 2
             frameRate:  20
-            gain: 18.0
+            gain: 10.0
             is_auto_shutter: false
             is_sync: true
             shutter: 5.0
@@ -18,7 +18,7 @@
 
             # individual setting for camera 0
             camera0:
-                serialNum: 17532720
+                serialNum: 17591762
                 topic:     right/image_raw
                 topic_roi: right/image
                 is_roi:    true
@@ -30,7 +30,7 @@
                 cropper_y: 1024
                 down_sample_scale: 0.5
             camera1:
-                serialNum: 17532721
+                serialNum: 17591763
                 topic:     left/image_raw
                 topic_roi: left/image
                 is_roi:    true
