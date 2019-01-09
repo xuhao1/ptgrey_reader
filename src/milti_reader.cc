@@ -11,6 +11,31 @@
 #include <ros/ros.h>
 #include <sstream>
 
+
+void
+colorToGrey( cv::Mat& image_in, cv::Mat& image_out )
+{
+    uchar p_out;
+    cv::Vec3b p_in;
+    for ( int idx_row = 0; idx_row < image_in.rows; ++idx_row )
+    {
+
+        for ( int idx_col = 0; idx_col < image_in.cols; ++idx_col )
+        {
+
+            p_in  = image_in.at< cv::Vec3b >( idx_row, idx_col);
+
+            // Red * 0.299 + Green * 0.587 + Blue * 0.114
+            int dst = p_in[0]   //
+                      + p_in[1] //
+                      + p_in[2];
+
+            image_out.at< uchar >( idx_row, idx_col) = dst > 255 ? 255 : dst;
+        }
+    }
+}
+
+
 int
 main( int argc, char** argv )
 {
@@ -21,17 +46,25 @@ main( int argc, char** argv )
     bool is_show         = false;
     bool is_print        = true;
     bool is_auto_shutter = false;
+
+    bool is_grey             = false;
+    
     bool is_sync         = false;
     double brightness    = 0.1;
     double exposure      = 0.1;
     double gain          = 1.0;
     double frameRate     = 30.0;
     double shutter       = 5.0;
+    bool is_first = true;
+    cv::Mat image_grey;
+    int src_cols = 0;
+    int src_rows = 0;
     int cam_cnt          = 1;
 
     nh.getParam( "is_pub", is_pub );
     nh.getParam( "is_show", is_show );
     nh.getParam( "is_print", is_print );
+    nh.getParam( "is_grey", is_grey );
     nh.getParam( "is_auto_shutter", is_auto_shutter );
     nh.getParam( "is_sync", is_sync );
     nh.getParam( "brightness", brightness );
@@ -145,13 +178,35 @@ main( int argc, char** argv )
 
                 outImg.header.frame_id = "frame";
                 if ( camReader.Cameras( )->isColorCamera( ) )
-                    outImg.encoding = sensor_msgs::image_encodings::BGR8;
+                {
+                    if (is_grey)    
+                        outImg.encoding = sensor_msgs::image_encodings::TYPE_8UC1;
+                    else
+                        outImg.encoding = sensor_msgs::image_encodings::BGR8;
+                }
+
                 else
-                    outImg.encoding = sensor_msgs::image_encodings::MONO8;
+                    outImg.encoding = sensor_msgs::image_encodings::TYPE_8UC1;
+
 
                 for ( int pub_index = 0; pub_index < cam_cnt; ++pub_index )
                 {
-                    outImg.image = images_tmp.at( pub_index ).image;
+                    if (is_grey){
+                        if ( is_first )
+                        {
+                            src_rows = images_tmp.at( pub_index ).image.rows;
+                            src_cols = images_tmp.at( pub_index ).image.cols;
+                            cv::Mat img_tmp( src_rows, src_cols, CV_8UC1 );
+                            img_tmp.copyTo( image_grey );
+                            is_first = false;
+                        }
+                        colorToGrey( images_tmp.at( pub_index ).image, image_grey );
+                        outImg.image = image_grey;
+                    }
+                    else {
+                        outImg.image = images_tmp.at( pub_index ).image;
+                    }
+
                     Publishers.at( pub_index ).publish( outImg );
 
                     if ( is_rois.at( pub_index ) )
@@ -167,6 +222,9 @@ main( int argc, char** argv )
             {
                 cv::imshow( "image", images_tmp.at( 0 ).image );
                 cv::imshow( "image2", images_tmp.at( 1 ).image );
+                if (is_grey){
+                    cv::imshow("ImgGrey", image_grey);
+                }
                 cv::waitKey( 10 );
             }
         }
