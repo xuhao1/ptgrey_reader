@@ -201,11 +201,9 @@ main( int argc, char** argv )
                             is_first = false;
                         }
                         colorToGrey( images_tmp.at( pub_index ).image, image_grey );
-                        outImg.image = image_grey;
+                        images_tmp.at( pub_index ).image = image_grey;
                     }
-                    else {
-                        outImg.image = images_tmp.at( pub_index ).image;
-                    }
+                    outImg.image = images_tmp.at( pub_index ).image;
 
                     Publishers.at( pub_index ).publish( outImg );
 
