@@ -11,14 +11,17 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   std_msgs
-  cv_bridge
+  # cv_bridge
 #  sys_utils
 )
 
 find_package(Boost REQUIRED COMPONENTS filesystem program_options system)
 include_directories(${Boost_INCLUDE_DIRS})
 
-find_package(OpenCV REQUIRED)
+SET("OpenCV_DIR"  "/usr/local/share/OpenCV/")
+
+find_package(OpenCV REQUIRED
+NO_DEFAULT_PATH)
 
 set(LIBUSB_1_INCLUDE_DIR
     /usr/local/include/libusb-1.0
@@ -91,11 +94,16 @@ include_directories(
 add_executable(single_reader    src/single_reader.cc    src/ptgrey_lib/singleCamera.cpp    src/ptgrey_lib/singleCameraReader.cpp  src/preprocess/process.cc)
 target_link_libraries( single_reader    ${catkin_LIBRARIES}    ${OpenCV_LIBS}    ${POINTGREY_LIBRARIES} ${LIBUSB_1_LIBRARIES} )
 
+add_executable(sync_single_reader    src/sync_single_reader.cpp    src/ptgrey_lib/singleCamera.cpp    src/ptgrey_lib/singleCameraReader.cpp  src/preprocess/process.cc)
+target_link_libraries( sync_single_reader   ${OpenCV_LIBS}    ${catkin_LIBRARIES}     ${POINTGREY_LIBRARIES} ${LIBUSB_1_LIBRARIES} )
+
 add_library(ptgrey_reader  src/milti_reader.cc   src/ptgrey_lib/singleCameraReader.cpp  src/ptgrey_lib/multiCamera.cpp    src/ptgrey_lib/multiCameraReader.cpp  src/preprocess/process.cc src/ptgrey_lib/singleCamera.cpp)
 target_link_libraries(ptgrey_reader    ${catkin_LIBRARIES}    ${OpenCV_LIBS}    ${POINTGREY_LIBRARIES}    ${LIBUSB_1_LIBRARIES}  )
 
 add_executable(multi_reader    src/milti_reader.cc    src/ptgrey_lib/multiCamera.cpp    src/ptgrey_lib/multiCameraReader.cpp  src/ptgrey_lib/singleCamera.cpp src/preprocess/process.cc  )
 target_link_libraries( multi_reader   ${catkin_LIBRARIES}    ${OpenCV_LIBS}    ${POINTGREY_LIBRARIES}    ${LIBUSB_1_LIBRARIES}   )
 
+
+message("Opencv!!!!!!!!!!!!!!${OpenCV_INCLUDE_DIRS}!!!!!!!!!!!!!${OpenCV_VERSION}!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ${OpenCV_LIBS}")
 add_executable( camera_list    src/camera_list.cc)
 target_link_libraries( camera_list    ${catkin_LIBRARIES}    ${OpenCV_LIBS}    ${POINTGREY_LIBRARIES}    ${LIBUSB_1_LIBRARIES}   )

@@ -15,7 +15,10 @@ class PreProcess
     PreProcess( );
     PreProcess( cv::Size _raw_image_size, cv::Size _roi_size, cv::Point _center, float _resize_scale );
 
-    cv::Mat do_preprocess( cv::Mat image_input );
+    cv::Mat do_preprocess( cv::Mat image_input);
+
+    void do_preprocess_gpu(cv::Mat & image_input, cv::Mat & out);
+    void do_preprocess_cpu(cv::Mat & image_input, cv::Mat & out);
 
     float resize_scale;
     int roi_row_start;
