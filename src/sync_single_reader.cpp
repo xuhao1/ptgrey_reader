@@ -24,6 +24,7 @@ class SyncSingleReader {
     preprocess::PreProcess* pre = nullptr;
     bool trigger_time_vaild = true;
     std_msgs::Header tri_header;
+    sensor_msgs::TimeReference trigger_time;
 
     bool is_pub              = true;
     bool is_show             = false;
@@ -70,10 +71,14 @@ class SyncSingleReader {
 
         trigger_time_vaild = true;
         no_sync_recved = false;
-        if (is_print)
-            ROS_INFO("tri recved align %3.2fms dt %3.2f %3.2fms", (ros::Time::now()- _ref.header.stamp).toSec()*1000, from_last*1000, from_last2*1000);
+        ROS_INFO_THROTTLE(1.0, "tri recved align %3.2fms dt %3.2f %3.2fms", (ros::Time::now() - _ref.time_ref).toSec()*1000, from_last*1000, from_last2*1000);
+        trigger_time = _ref;
+        auto ts = ros::Time::now();
         grab();
+        ROS_INFO_THROTTLE(1.0, "grab time cost %4.2f", (ros::Time::now() - ts).toSec()*1000);
     }
+    
+    cv_bridge::CvImage outImg;
 
     void grab() {
     // void grab(const ros::TimerEvent & e) {
@@ -81,39 +86,44 @@ class SyncSingleReader {
             // return;
         bool need_regrab = true;
         // int recali
-        cv_bridge::CvImage outImg;
-        ptgrey_reader::cvImage cv_image;
         while (need_regrab) {
-
-            cv_image = camReader->grabImage( );
+            auto ts = ros::Time::now();
+            
+            FlyCapture2::Error error;
+            FlyCapture2::TimeStamp cam_time;
+            camReader->Camera().captureOneImage( error, outImg.image, cam_time );
             ++imageCnt;
+            
+            ROS_INFO_THROTTLE(1.0, "grab only time cost %4.2f", (ros::Time::now() - ts).toSec()*1000);
 
-            if ( cv_image.image.empty( ) )
+            if ( outImg.image.empty( ) )
             {
                 std::cout << "[#INFO] Grabbed no image." << std::endl;
                 return;
             }
             
-            outImg.header.stamp.sec  = cv_image.time.seconds;
-            outImg.header.stamp.nsec = cv_image.time.microSeconds * 1000;
+            outImg.header.stamp.sec  = cam_time.seconds;
+            outImg.header.stamp.nsec = cam_time.microSeconds * 1000;
 
-            auto old_ts = outImg.header.stamp;
-            
+            auto image_ros_time = outImg.header.stamp;
+            auto trigger_ros_time = trigger_time.time_ref;
+            auto dt_trigger_image_ms = (trigger_ros_time - image_ros_time).toSec()*1000;
+
             if (is_sync) {
                 outImg.header.stamp = tri_header.stamp;
                 //Still have bugs... that trigger is faster than image, should be slower..
                 if (is_print)
-                    ROS_INFO("using trigger ts, dt %3.2f ms", (tri_header.stamp - old_ts).toSec()*1000);
+                    ROS_INFO("using trigger ts, dt %3.2f ms", dt_trigger_image_ms);
                 
-                if ((tri_header.stamp - old_ts).toSec() > 0) {
+                if (dt_trigger_image_ms > 0) {
                     ROS_WARN("Image too old, will regrab");
                     continue;
                 } else {
                     need_regrab = false;
                 }
                 
-                if (fabs( (tri_header.stamp - old_ts).toSec()*1000 + 32) > 5) {
-                    ROS_WARN("using unexpect trigger ts, dt %3.2f ms", (tri_header.stamp - old_ts).toSec()*1000);
+                if (fabs( dt_trigger_image_ms + 32) > 10) {
+                    ROS_WARN("using unexpect trigger ts, dt ros %3.2fms ros-fc %3.2fms", dt_trigger_image_ms, (tri_header.stamp - image_ros_time).toSec()*1000);
                 }
 
                 
@@ -132,19 +142,10 @@ class SyncSingleReader {
             if ( camReader->Camera( ).isColorCamera( ) )
             {
                 outImg.encoding = sensor_msgs::image_encodings::BGR8;
-                if ( is_first )
-                {
-                    src_rows = cv_image.image.rows;
-                    src_cols = cv_image.image.cols;
-                    cv::Mat img_tmp( src_rows, src_cols, CV_8UC1 );
-                    img_tmp.copyTo( image_grey );
-                    is_first = false;
-                }
             }
             else
                 outImg.encoding = sensor_msgs::image_encodings::MONO8;
 
-            outImg.image = cv_image.image;
             imagePublisher.publish( outImg );
 
             if ( is_roi )
@@ -152,38 +153,19 @@ class SyncSingleReader {
                 if (use_gpu){
                     if ( is_print )
                         ROS_INFO("Proprecess with gpu");
-
-                    pre->do_preprocess_gpu( cv_image.image, outImg.image);
+                    pre->do_preprocess_gpu( outImg.image, outImg.image);
                 } else {
-                    pre->do_preprocess_cpu( cv_image.image, outImg.image);
+                    pre->do_preprocess_cpu( outImg.image, outImg.image);
                 }
 
                 imageROIPublisher.publish( outImg );
             }
 
-            if ( is_grey && camReader->Camera( ).isColorCamera( ) )
-            {
-                outImg.encoding = sensor_msgs::image_encodings::MONO8;
-
-                // cv::cvtColor( cv_image.image, outImg.image, CV_BGR2GRAY );
-                // colorToGrey( cv_image.image, image_grey );
-                outImg.image = image_grey;
-                imageGreyPublisher.publish( outImg );
-
-                if ( is_roi )
-                {
-                    if (use_gpu){
-                        pre->do_preprocess_gpu( cv_image.image, outImg.image);
-                    } else {
-                        pre->do_preprocess_cpu( cv_image.image, outImg.image);
-                    }
-                }
-            }
         }
 
         if ( is_show )
         {
-            cv::imshow( "image", cv_image.image );
+            cv::imshow( "image", outImg.image );
             cv::waitKey( 10 );
         }
     }
@@ -301,7 +283,7 @@ int main(int argc, char * argv[]) {
     ros::NodeHandle nh("sync_single_reader");
     ROS_INFO("Start Sync Single reader");
     SyncSingleReader ssr(nh);
-    // ros::MultiThreadedSpinner spinner(1); // Use 4 threads
-    // spinner.spin();
-    ros::spin();
+    ros::MultiThreadedSpinner spinner(2); // Use 4 threads
+    spinner.spin();
+    // ros::spin();
 }
