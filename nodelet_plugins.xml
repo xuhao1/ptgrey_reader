@@ -1,0 +1,8 @@
+<library path="lib/libsync_single_reader_nodelet">
+    <class name="ptgrey_reader_nodelet_pkg/sync_single_reader_nodelet" type="ptgrey_reader_nodelet_pkg::SyncSingleReaderNodelet" base_class_type="nodelet::Nodelet">
+
+        <description>
+            Nodelet Version of PtGrey Reader
+        </description>
+    </class>
+</library>
