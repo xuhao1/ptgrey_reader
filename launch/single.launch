@@ -1,8 +1,8 @@
 <launch>
 
-    <arg name="device" default = "17533322"/>
+    <arg name="device" default = "17591762"/>
     <arg name="rate" default="20"/>
-    <arg name="is_sync" default="true"/> 
+    <arg name="is_sync" default="false"/> 
 
     <node name="single_reader" pkg="ptgrey_reader" type="single_reader"
          ns="pg_$(arg device)" output="screen">
