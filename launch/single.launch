@@ -3,7 +3,9 @@
     <arg name="device" default = "17591762"/>
     <arg name="rate" default="20"/>
     <arg name="is_sync" default="false"/> 
+
     <arg name="output" default="screen"/>
+
     <node name="single_reader" pkg="ptgrey_reader" type="single_reader"
          ns="pg_$(arg device)" output="$(arg output)" >
         <remap from="/image_out" to="image_raw" />
