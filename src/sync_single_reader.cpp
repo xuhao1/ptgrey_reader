@@ -93,8 +93,8 @@ class SyncSingleReader {
             FlyCapture2::TimeStamp cam_time;
             camReader->Camera().captureOneImage( error, outImg.image, cam_time );
             ++imageCnt;
-            
-            ROS_INFO_THROTTLE(1.0, "grab only time cost %4.2f", (ros::Time::now() - ts).toSec()*1000);
+            double dt_grab = (ros::Time::now() - ts).toSec() * 1000; 
+            ROS_INFO_THROTTLE(1.0, "grab only time cost %4.2f", dt_grab);
 
             if ( outImg.image.empty( ) )
             {
@@ -118,12 +118,15 @@ class SyncSingleReader {
                 if (dt_trigger_image_ms > 0) {
                     ROS_WARN("Image too old, will regrab");
                     continue;
+                    //need_regrab = false;
                 } else {
                     need_regrab = false;
                 }
                 
-                if (fabs( dt_trigger_image_ms + 32) > 10) {
+                if (fabs( dt_trigger_image_ms + dt_grab) > 10) {
                     ROS_WARN("using unexpect trigger ts, dt ros %3.2fms ros-fc %3.2fms", dt_trigger_image_ms, (tri_header.stamp - image_ros_time).toSec()*1000);
+                } else {
+                    ROS_INFO("Dt ros %3.2fms ros-fc %3.2fms", dt_trigger_image_ms + dt_grab);
                 }
 
                 
