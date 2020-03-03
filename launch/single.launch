@@ -17,7 +17,7 @@
         <param name="serialNum" type="int" value="$(arg device)"/>
         <param name="frameRate" type="double" value="$(arg rate)"/>
         <param name="is_auto_shutter" type="bool" value="false"/>
-        <param name="shutter" type="double" value="4.5"/>
+        <param name="shutter" type="double" value="10.5"/>
         <param name="brightness" type="double" value="3.1"/>
         <param name="exposure" type="double" value="0.8"/>
         <param name="WB_red" type="int" value="550"/>
