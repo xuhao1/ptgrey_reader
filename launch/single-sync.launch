@@ -1,0 +1,39 @@
+<launch>
+    <arg name="is_sync" default="true"/> 
+    <arg name="rate" default="20"/>
+    <arg name="is_print" default="false"/>
+    <arg name="device" default="17591762"/>
+
+    <arg name="config_path" default="/home/dji/SwarmConfig/camera_config.yaml" />
+    <node name="sync_single_reader" pkg="ptgrey_reader" type="sync_single_reader"
+         ns="/stereo/left" output="screen">
+        <remap from="/image_raw" to="/stereo/left/image_raw" />
+        <remap from="/image" to="/stereo/left/image" />
+        <param name="is_pub" type="bool" value="true"/>
+        <param name="is_show" type="bool" value="false"/>
+        <param name="is_print" type="bool" value="$(arg is_print)"/>
+        <param name="is_sync" type="bool" value="$(arg is_sync)"/>
+        <param name="serialNum" type="int" value="$(arg device)"/>
+        <param name="frameRate" type="double" value="$(arg rate)"/>
+        <param name="is_auto_shutter" type="bool" value="false"/>
+        <param name="WB_red" type="int" value="550"/>
+        <param name="WB_Blue" type="int" value="810"/>
+        <param name="use_gpu" type="bool" value="true"/>
+	    <rosparam command="load" file="$(arg config_path)" />
+        <rosparam>
+            is_grey:   false
+            is_roi:    false
+            size_x:    1280
+            size_y:    1024
+            center_x:  640
+            center_y:  512
+            cropper_x: 900
+            cropper_y: 900
+            down_sample_scale: 1.0
+
+            saturation: 300
+            hue:        30
+            sharpness:  0
+        </rosparam>
+    </node>
+</launch>
