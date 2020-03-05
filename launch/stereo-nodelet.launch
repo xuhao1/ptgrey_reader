@@ -1,5 +1,5 @@
 <launch>
-    <arg name="is_sync" default="true"/> 
+    <arg name="is_sync" default="false"/> 
     <arg name="rate" default="20"/>
     <arg name="is_print" default="false"/>
     <arg name="manager"     default="manager"/>
@@ -15,7 +15,7 @@
         <param name="is_show" type="bool" value="false"/>
         <param name="is_print" type="bool" value="$(arg is_print)"/>
         <param name="is_sync" type="bool" value="$(arg is_sync)"/>
-        <param name="serialNum" type="int" value="17591762"/>
+        <param name="serialNum" type="int" value="17302082"/>
         <param name="frameRate" type="double" value="$(arg rate)"/>
         <param name="is_auto_shutter" type="bool" value="false"/>
         <param name="WB_red" type="int" value="550"/>

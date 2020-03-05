@@ -97,11 +97,14 @@ target_link_libraries( single_reader    ${catkin_LIBRARIES}    ${OpenCV_LIBS}   
 add_executable(sync_single_reader    src/sync_single_reader.cpp    src/ptgrey_lib/singleCamera.cpp    src/ptgrey_lib/singleCameraReader.cpp  src/preprocess/process.cc)
 target_link_libraries( sync_single_reader   ${OpenCV_LIBS}    ${catkin_LIBRARIES}     ${POINTGREY_LIBRARIES} ${LIBUSB_1_LIBRARIES} )
 
-add_library(ptgrey_reader  src/milti_reader.cc   src/ptgrey_lib/singleCameraReader.cpp  src/ptgrey_lib/multiCamera.cpp    src/ptgrey_lib/multiCameraReader.cpp  src/preprocess/process.cc src/ptgrey_lib/singleCamera.cpp)
+add_library(ptgrey_reader  src/multi_reader.cc   src/ptgrey_lib/singleCameraReader.cpp  src/ptgrey_lib/multiCamera.cpp    src/ptgrey_lib/multiCameraReader.cpp  src/preprocess/process.cc src/ptgrey_lib/singleCamera.cpp)
 target_link_libraries(ptgrey_reader    ${catkin_LIBRARIES}    ${OpenCV_LIBS}    ${POINTGREY_LIBRARIES}    ${LIBUSB_1_LIBRARIES}  )
 
-add_executable(multi_reader    src/milti_reader.cc    src/ptgrey_lib/multiCamera.cpp    src/ptgrey_lib/multiCameraReader.cpp  src/ptgrey_lib/singleCamera.cpp src/preprocess/process.cc  )
+add_executable(multi_reader    src/multi_reader.cc    src/ptgrey_lib/multiCamera.cpp    src/ptgrey_lib/multiCameraReader.cpp  src/ptgrey_lib/singleCamera.cpp src/preprocess/process.cc  )
 target_link_libraries( multi_reader   ${catkin_LIBRARIES}    ${OpenCV_LIBS}    ${POINTGREY_LIBRARIES}    ${LIBUSB_1_LIBRARIES}   )
+
+add_executable(sync_multi_reader    src/sync_multi_reader.cpp    src/ptgrey_lib/multiCamera.cpp    src/ptgrey_lib/multiCameraReader.cpp  src/ptgrey_lib/singleCamera.cpp src/preprocess/process.cc  )
+target_link_libraries( sync_multi_reader   ${catkin_LIBRARIES}    ${OpenCV_LIBS}    ${POINTGREY_LIBRARIES}    ${LIBUSB_1_LIBRARIES}   )
 
 
 message("Opencv!!!!!!!!!!!!!!${OpenCV_INCLUDE_DIRS}!!!!!!!!!!!!!${OpenCV_VERSION}!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ${OpenCV_LIBS}")

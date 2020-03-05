@@ -2,7 +2,7 @@
     <arg name="is_sync" default="true"/> 
     <arg name="rate" default="20"/>
     <arg name="is_print" default="false"/>
-    <arg name="device" default="17591762"/>
+    <arg name="device" default="17532721"/>
 
     <arg name="config_path" default="/home/dji/SwarmConfig/camera_config.yaml" />
     <node name="sync_single_reader" pkg="ptgrey_reader" type="sync_single_reader"
