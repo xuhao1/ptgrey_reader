@@ -9,6 +9,7 @@
 #include <sstream>
 #include <sensor_msgs/TimeReference.h>
 #include <std_msgs/Header.h>
+#include <boost/format.hpp>
 
 void
 colorToGrey( cv::Mat& image_in, cv::Mat& image_out )

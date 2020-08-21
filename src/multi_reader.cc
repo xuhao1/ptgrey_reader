@@ -10,6 +10,7 @@
 #include <opencv2/opencv.hpp>
 #include <ros/ros.h>
 #include <sstream>
+#include <boost/format.hpp>
 
 
 void
