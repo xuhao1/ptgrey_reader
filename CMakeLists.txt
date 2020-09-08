@@ -11,14 +11,14 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   std_msgs
-  # cv_bridge
+  cv_bridge
 #  sys_utils
 )
 
 find_package(Boost REQUIRED COMPONENTS filesystem program_options system)
 include_directories(${Boost_INCLUDE_DIRS})
 
-SET("OpenCV_DIR"  "/usr/local/share/OpenCV/")
+SET("OpenCV_DIR"  "/usr/share/OpenCV/")
 
 find_package(OpenCV REQUIRED
 NO_DEFAULT_PATH)
@@ -29,7 +29,8 @@ set(LIBUSB_1_INCLUDE_DIR
 message(STATUS "Found libusb.h: ${LIBUSB_1_INCLUDE_DIR}")
 
 set(LIBUSB_1_LIBRARY
-    /usr/local/lib/libusb-1.0.so
+	#/usr/local/lib/libusb-1.0.so
+    /usr/lib/aarch64-linux-gnu/libusb-1.0.so
 )
 message(STATUS "Found libusb 1.0 library: ${LIBUSB_1_LIBRARY}")
 
