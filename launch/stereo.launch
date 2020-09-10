@@ -1,6 +1,4 @@
 <launch>
-    <arg name="UP_ID" default="17591762"/>
-    <arg name="DOWN_ID" default="17533328"/>
     <arg name="is_sync" default="true"/> 
     <arg name="rate" default="20"/>
     <arg name="is_print" default="false"/>
@@ -14,7 +12,6 @@
         <param name="is_show" type="bool" value="false"/>
         <param name="is_print" type="bool" value="$(arg is_print)"/>
         <param name="is_sync" type="bool" value="$(arg is_sync)"/>
-        <param name="serialNum" type="int" value="$(arg UP_ID)"/>
         <param name="frameRate" type="double" value="$(arg rate)"/>
         <param name="is_auto_shutter" type="bool" value="false"/>
         <param name="WB_red" type="int" value="550"/>
@@ -44,7 +41,6 @@
         <param name="is_show" type="bool" value="false"/>
         <param name="is_print" type="bool" value="$(arg is_print)"/>
         <param name="is_sync" type="bool" value="$(arg is_sync)"/>
-        <param name="serialNum" type="int" value="$(arg DOWN_ID)"/>
         <param name="frameRate" type="double" value="$(arg rate)"/>
         <param name="is_auto_shutter" type="bool" value="false"/>
         <param name="WB_red" type="int" value="550"/>
