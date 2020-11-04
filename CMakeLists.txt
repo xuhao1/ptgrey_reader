@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   std_msgs
+  nodelet
   cv_bridge
 #  sys_utils
 )
@@ -18,7 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Boost REQUIRED COMPONENTS filesystem program_options system)
 include_directories(${Boost_INCLUDE_DIRS})
 
-SET("OpenCV_DIR"  "/usr/share/OpenCV/")
+SET("OpenCV_DIR"  "/usr/local/share/OpenCV/")
 
 find_package(OpenCV REQUIRED
 NO_DEFAULT_PATH)
@@ -94,6 +95,9 @@ include_directories(
 
 add_executable(single_reader    src/single_reader.cc    src/ptgrey_lib/singleCamera.cpp    src/ptgrey_lib/singleCameraReader.cpp  src/preprocess/process.cc)
 target_link_libraries( single_reader    ${catkin_LIBRARIES}    ${OpenCV_LIBS}    ${POINTGREY_LIBRARIES} ${LIBUSB_1_LIBRARIES} )
+
+add_library(sync_single_reader_nodelet    src/sync_single_reader_nodelet.cpp    src/ptgrey_lib/singleCamera.cpp    src/ptgrey_lib/singleCameraReader.cpp  src/preprocess/process.cc)
+target_link_libraries( sync_single_reader_nodelet    ${catkin_LIBRARIES}    ${OpenCV_LIBS}    ${POINTGREY_LIBRARIES} ${LIBUSB_1_LIBRARIES} )
 
 add_executable(sync_single_reader    src/sync_single_reader.cpp    src/ptgrey_lib/singleCamera.cpp    src/ptgrey_lib/singleCameraReader.cpp  src/preprocess/process.cc)
 target_link_libraries( sync_single_reader   ${OpenCV_LIBS}    ${catkin_LIBRARIES}     ${POINTGREY_LIBRARIES} ${LIBUSB_1_LIBRARIES} )
