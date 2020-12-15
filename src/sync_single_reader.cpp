@@ -10,6 +10,7 @@
 #include <ros/ros.h>
 #include <std_msgs/Header.h>
 #include <sensor_msgs/TimeReference.h>
+#include <sensor_msgs/CompressedImage.h>
 
 using namespace ros;
 
@@ -20,7 +21,8 @@ class SyncSingleReader {
     ros::Publisher imageROIGreyPublisher;
     ros::Subscriber trigger_time_sub;
     ros::Publisher imagePublisher;
-
+    ros::Publisher imageCompressedPublisher;
+    
     preprocess::PreProcess* pre = nullptr;
     bool trigger_time_vaild = true;
     std_msgs::Header tri_header;
@@ -31,6 +33,8 @@ class SyncSingleReader {
     bool is_print            = true;
     bool is_first            = true;
     bool is_grey             = false;
+    bool pub_compressed      = false;
+    int jpg_quality          =  95;
     int serialNum            = 17221121;
     bool is_auto_shutter     = false;
     bool is_sync             = true;
@@ -164,6 +168,13 @@ class SyncSingleReader {
                 imageROIPublisher.publish( outImg );
             }
 
+            if (pub_compressed && imageCompressedPublisher.getNumSubscribers() > 0) {
+                sensor_msgs::CompressedImage _img_compressed;
+                cv::imencode("jpg", outImg.image, _img_compressed.data);
+                _img_compressed.header = outImg.header;
+                _img_compressed.format = "jpeg";
+                imageCompressedPublisher.publish( _img_compressed );
+            }
         }
 
         if ( is_show )
@@ -205,6 +216,8 @@ public:
         nh.getParam( "center_y", center_y );
         nh.getParam( "cropper_x", cropper_x );
         nh.getParam( "cropper_y", cropper_y );
+        nh.getParam( "pub_compressed", pub_compressed );
+        nh.getParam( "jpg_quality", jpg_quality);
 
         std::stringstream os;
         os << serialNum;
@@ -259,7 +272,12 @@ public:
             ROS_INFO("Is trigger, subscribe to time reference");
             trigger_time_sub = nh.subscribe("/dji_sdk_1/dji_sdk/trigger_time", 1, &SyncSingleReader::on_time_reference, this, ros::TransportHints().tcpNoDelay());
         }
-
+        
+        if (pub_compressed) {
+            ROS_INFO("Will publish compressed images");
+            imageCompressedPublisher = nh.advertise< sensor_msgs::CompressedImage >( "/image_compressed", 3);
+        }
+        
         if ( !is_cameraStarted )
         {
             ros::shutdown( );
