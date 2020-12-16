@@ -197,6 +197,8 @@ namespace ptgrey_reader_nodelet_pkg
             }
 
             std::cout << "[#INFO] Loop start." << ros::ok( ) << std::endl;
+
+            cv::setNumThreads(1);
         }
         
         //Callback for trigger_time_sub
