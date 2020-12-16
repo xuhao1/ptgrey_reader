@@ -300,7 +300,7 @@ namespace ptgrey_reader_nodelet_pkg
                 if (pub_compressed && imageCompressedPublisher.getNumSubscribers() > 0) {
                     sensor_msgs::CompressedImage _img_compressed;
                     auto ts = ros::Time::now();
-                    cv::imencode("jpg", outImg.image, _img_compressed.data);
+                    cv::imencode(".jpg", outImg.image, _img_compressed.data);
                     ROS_INFO_THROTTLE(1.0, "Encode cost %4.2f", (ros::Time::now() - ts).toSec()*1000);
                     _img_compressed.header = outImg.header;
                     _img_compressed.format = "jpeg";
