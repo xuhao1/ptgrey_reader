@@ -37,7 +37,7 @@
             hue:        30
             sharpness:  0
             pub_compressed: true
-            jpg_quality: 95
+            jpg_quality: 90
         </rosparam>
     </node>
     <node name="sync_single_reader" pkg="nodelet" type="nodelet"
