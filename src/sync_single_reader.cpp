@@ -15,6 +15,7 @@
 using namespace ros;
 
 class SyncSingleReader {
+    std::vector<int> params;
     ros::NodeHandle nh;
     ros::Publisher imageROIPublisher;
     ros::Publisher imageGreyPublisher;
@@ -130,7 +131,7 @@ class SyncSingleReader {
                 if (fabs( dt_trigger_image_ms + dt_grab) > 10) {
                     ROS_WARN("using unexpect trigger ts, dt ros %3.2fms ros-fc %3.2fms", dt_trigger_image_ms, (tri_header.stamp - image_ros_time).toSec()*1000);
                 } else {
-                    ROS_INFO("Dt ros %3.2fms ros-fc %3.2fms", dt_trigger_image_ms + dt_grab);
+                    ROS_INFO_THROTTLE(1.0, "Dt ros %3.2fms ros-fc %3.2fms", dt_trigger_image_ms + dt_grab);
                 }
 
                 
@@ -170,7 +171,9 @@ class SyncSingleReader {
 
             if (pub_compressed && imageCompressedPublisher.getNumSubscribers() > 0) {
                 sensor_msgs::CompressedImage _img_compressed;
-                cv::imencode("jpg", outImg.image, _img_compressed.data);
+                auto ts = ros::Time::now();
+                cv::imencode(".jpg", outImg.image, _img_compressed.data, params);
+                ROS_INFO_THROTTLE(1.0, "Encode cost %4.2f", (ros::Time::now() - ts).toSec()*1000);
                 _img_compressed.header = outImg.header;
                 _img_compressed.format = "jpeg";
                 imageCompressedPublisher.publish( _img_compressed );
@@ -218,6 +221,9 @@ public:
         nh.getParam( "cropper_y", cropper_y );
         nh.getParam( "pub_compressed", pub_compressed );
         nh.getParam( "jpg_quality", jpg_quality);
+
+        params.push_back(cv::IMWRITE_JPEG_QUALITY);
+        params.push_back(jpg_quality);
 
         std::stringstream os;
         os << serialNum;
