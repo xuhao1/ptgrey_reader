@@ -21,8 +21,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 SET("OpenCV_DIR"  "/usr/local/share/OpenCV/")
 
-find_package(OpenCV REQUIRED
-NO_DEFAULT_PATH)
+find_package(OpenCV REQUIRED)
 
 set(LIBUSB_1_INCLUDE_DIR
     /usr/local/include/libusb-1.0
