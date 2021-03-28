@@ -1,6 +1,4 @@
 #include "process.h"
-#include <opencv2/cudawarping.hpp>
-#include "opencv2/core/cuda.hpp"
 
 preprocess::PreProcess::PreProcess( cv::Size _raw_image_size, cv::Size _roi_size, cv::Point _center, float _resize_scale )
 : resize_scale( _resize_scale )
@@ -19,12 +17,10 @@ preprocess::PreProcess::PreProcess( cv::Size _raw_image_size, cv::Size _roi_size
 void
 preprocess::PreProcess::do_preprocess_gpu(cv::Mat & image_input, cv::Mat & out)
 {
-    // if (roi_row_end - roi_row_start != image_input.rows && )
-        // printf("using gpu for resize");
-    cv::cuda::GpuMat input (image_input);
-    cv::cuda::GpuMat output;
-    cv::cuda::resize(input, output,  cv::Size( image_input.cols * resize_scale, image_input.rows * resize_scale ) );
-    output.download(out);
+    // cv::cuda::GpuMat input (image_input);
+    // cv::cuda::GpuMat output;
+    // cv::cuda::resize(input, output,  cv::Size( image_input.cols * resize_scale, image_input.rows * resize_scale ) );
+    // output.download(out);
 }
 
 

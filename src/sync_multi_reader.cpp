@@ -221,6 +221,8 @@ class SyncMultiReader {
             }
             cv::waitKey( 10 );
         }
+
+        cv::setNumThreads(1);
     }
 
 public:

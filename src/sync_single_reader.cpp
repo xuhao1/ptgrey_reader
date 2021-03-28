@@ -10,17 +10,20 @@
 #include <ros/ros.h>
 #include <std_msgs/Header.h>
 #include <sensor_msgs/TimeReference.h>
+#include <sensor_msgs/CompressedImage.h>
 
 using namespace ros;
 
 class SyncSingleReader {
+    std::vector<int> params;
     ros::NodeHandle nh;
     ros::Publisher imageROIPublisher;
     ros::Publisher imageGreyPublisher;
     ros::Publisher imageROIGreyPublisher;
     ros::Subscriber trigger_time_sub;
     ros::Publisher imagePublisher;
-
+    ros::Publisher imageCompressedPublisher;
+    
     preprocess::PreProcess* pre = nullptr;
     bool trigger_time_vaild = true;
     std_msgs::Header tri_header;
@@ -31,6 +34,8 @@ class SyncSingleReader {
     bool is_print            = true;
     bool is_first            = true;
     bool is_grey             = false;
+    bool pub_compressed      = false;
+    int jpg_quality          =  95;
     int serialNum            = 17221121;
     bool is_auto_shutter     = false;
     bool is_sync             = true;
@@ -126,7 +131,7 @@ class SyncSingleReader {
                 if (fabs( dt_trigger_image_ms + dt_grab) > 10) {
                     ROS_WARN("using unexpect trigger ts, dt ros %3.2fms ros-fc %3.2fms", dt_trigger_image_ms, (tri_header.stamp - image_ros_time).toSec()*1000);
                 } else {
-                    ROS_INFO("Dt ros %3.2fms ros-fc %3.2fms", dt_trigger_image_ms + dt_grab);
+                    ROS_INFO_THROTTLE(1.0, "Dt ros %3.2fms ros-fc %3.2fms", dt_trigger_image_ms + dt_grab);
                 }
 
                 
@@ -164,6 +169,15 @@ class SyncSingleReader {
                 imageROIPublisher.publish( outImg );
             }
 
+            if (pub_compressed && imageCompressedPublisher.getNumSubscribers() > 0) {
+                sensor_msgs::CompressedImage _img_compressed;
+                auto ts = ros::Time::now();
+                cv::imencode(".jpg", outImg.image, _img_compressed.data, params);
+                ROS_INFO_THROTTLE(1.0, "Encode cost %4.2f", (ros::Time::now() - ts).toSec()*1000);
+                _img_compressed.header = outImg.header;
+                _img_compressed.format = "jpeg";
+                imageCompressedPublisher.publish( _img_compressed );
+            }
         }
 
         if ( is_show )
@@ -205,6 +219,11 @@ public:
         nh.getParam( "center_y", center_y );
         nh.getParam( "cropper_x", cropper_x );
         nh.getParam( "cropper_y", cropper_y );
+        nh.getParam( "pub_compressed", pub_compressed );
+        nh.getParam( "jpg_quality", jpg_quality);
+
+        params.push_back(cv::IMWRITE_JPEG_QUALITY);
+        params.push_back(jpg_quality);
 
         std::stringstream os;
         os << serialNum;
@@ -259,7 +278,12 @@ public:
             ROS_INFO("Is trigger, subscribe to time reference");
             trigger_time_sub = nh.subscribe("/dji_sdk_1/dji_sdk/trigger_time", 1, &SyncSingleReader::on_time_reference, this, ros::TransportHints().tcpNoDelay());
         }
-
+        
+        if (pub_compressed) {
+            ROS_INFO("Will publish compressed images");
+            imageCompressedPublisher = nh.advertise< sensor_msgs::CompressedImage >( "/image_compressed", 3);
+        }
+        
         if ( !is_cameraStarted )
         {
             ros::shutdown( );

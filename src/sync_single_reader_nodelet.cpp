@@ -10,6 +10,7 @@
 #include <ros/ros.h>
 #include <std_msgs/Header.h>
 #include <sensor_msgs/TimeReference.h>
+#include <sensor_msgs/CompressedImage.h>
 #include <nodelet/nodelet.h>
 #include <message_filters/subscriber.h>
 #include <pluginlib/class_list_macros.h>
@@ -26,6 +27,9 @@ namespace ptgrey_reader_nodelet_pkg
 {
     class SyncSingleReaderNodelet : public nodelet::Nodelet
     {
+
+        std::vector<int> params;
+
         ros::NodeHandle nh;
 
         ros::Subscriber trigger_time_sub;
@@ -35,6 +39,7 @@ namespace ptgrey_reader_nodelet_pkg
         ros::Publisher imageGreyPublisher;
         ros::Publisher imageROIGreyPublisher;
         ros::Publisher imagePublisher;
+        ros::Publisher imageCompressedPublisher;
 
         preprocess::PreProcess* pre = nullptr;
         bool trigger_time_vaild = true;
@@ -46,6 +51,8 @@ namespace ptgrey_reader_nodelet_pkg
         bool is_print            = true;
         bool is_first            = true;
         bool is_grey             = false;
+        bool pub_compressed      = false;
+        int jpg_quality          =  95;
         int serialNum            = 17221121;
         bool is_auto_shutter     = false;
         bool is_sync             = true;
@@ -124,7 +131,12 @@ namespace ptgrey_reader_nodelet_pkg
             nh.getParam( "center_y", center_y );
             nh.getParam( "cropper_x", cropper_x );
             nh.getParam( "cropper_y", cropper_y );
+            nh.getParam( "pub_compressed", pub_compressed );
+            nh.getParam( "jpg_quality", jpg_quality);
 
+            params.push_back(cv::IMWRITE_JPEG_QUALITY);
+            params.push_back(jpg_quality);
+            
             std::stringstream os;
             os << serialNum;
 
@@ -180,6 +192,11 @@ namespace ptgrey_reader_nodelet_pkg
                 // trigger_time_sub.registerCallback(&SyncSingleReaderNodelet::on_time_reference);
             }
 
+            if (pub_compressed) {
+                ROS_INFO("Will publish compressed images");
+                imageCompressedPublisher = nh.advertise< sensor_msgs::CompressedImage >( "/image_compressed", 3);
+            }
+
             if ( !is_cameraStarted )
             {
                 ros::shutdown( );
@@ -187,6 +204,8 @@ namespace ptgrey_reader_nodelet_pkg
             }
 
             std::cout << "[#INFO] Loop start." << ros::ok( ) << std::endl;
+
+            cv::setNumThreads(1);
         }
         
         //Callback for trigger_time_sub
@@ -285,6 +304,16 @@ namespace ptgrey_reader_nodelet_pkg
                     }
 
                     imageROIPublisher.publish( outImg );
+                }
+
+                if (pub_compressed && imageCompressedPublisher.getNumSubscribers() > 0) {
+                    sensor_msgs::CompressedImage _img_compressed;
+                    auto ts = ros::Time::now();
+                    cv::imencode(".jpg", outImg.image, _img_compressed.data);
+                    ROS_INFO_THROTTLE(1.0, "Encode cost %4.2f", (ros::Time::now() - ts).toSec()*1000);
+                    _img_compressed.header = outImg.header;
+                    _img_compressed.format = "jpeg";
+                    imageCompressedPublisher.publish( _img_compressed );
                 }
 
             }
