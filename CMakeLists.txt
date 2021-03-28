@@ -21,8 +21,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 SET("OpenCV_DIR"  "/usr/local/share/OpenCV/")
 
-find_package(OpenCV REQUIRED
-NO_DEFAULT_PATH)
+find_package(OpenCV REQUIRED)
 
 set(LIBUSB_1_INCLUDE_DIR
     /usr/local/include/libusb-1.0
@@ -100,7 +99,7 @@ add_library(sync_single_reader_nodelet    src/sync_single_reader_nodelet.cpp    
 target_link_libraries( sync_single_reader_nodelet    ${catkin_LIBRARIES}    ${OpenCV_LIBS}    ${POINTGREY_LIBRARIES} ${LIBUSB_1_LIBRARIES} )
 
 add_executable(sync_single_reader    src/sync_single_reader.cpp    src/ptgrey_lib/singleCamera.cpp    src/ptgrey_lib/singleCameraReader.cpp  src/preprocess/process.cc)
-target_link_libraries( sync_single_reader   ${OpenCV_LIBS}    ${catkin_LIBRARIES}     ${POINTGREY_LIBRARIES} ${LIBUSB_1_LIBRARIES} )
+target_link_libraries( sync_single_reader   ${OpenCV_LIBS}    ${catkin_LIBRARIES}     ${POINTGREY_LIBRARIES} ${LIBUSB_1_LIBRARIES} dw )
 
 add_library(ptgrey_reader  src/multi_reader.cc   src/ptgrey_lib/singleCameraReader.cpp  src/ptgrey_lib/multiCamera.cpp    src/ptgrey_lib/multiCameraReader.cpp  src/preprocess/process.cc src/ptgrey_lib/singleCamera.cpp)
 target_link_libraries(ptgrey_reader    ${catkin_LIBRARIES}    ${OpenCV_LIBS}    ${POINTGREY_LIBRARIES}    ${LIBUSB_1_LIBRARIES}  )

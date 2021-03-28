@@ -16,6 +16,13 @@
 #include <pluginlib/class_list_macros.h>
 
 
+#define BACKWARD_HAS_DW 1
+#include <backward.hpp>
+namespace backward
+{
+    backward::SignalHandling sh;
+}
+
 namespace ptgrey_reader_nodelet_pkg
 {
     class SyncSingleReaderNodelet : public nodelet::Nodelet
