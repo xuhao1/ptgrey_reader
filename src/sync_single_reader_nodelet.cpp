@@ -253,8 +253,8 @@ namespace ptgrey_reader_nodelet_pkg
                     if (is_print)
                         ROS_INFO("using trigger ts, dt %3.2f ms", dt_trigger_image_ms);
                     
-                    if (dt_trigger_image_ms > 0) {
-                        ROS_WARN("Image too old, will regrab");
+                    if (dt_trigger_image_ms > 5) {
+                        ROS_WARN("Image too old %3.2fms, will regrab", dt_trigger_image_ms);
                         continue;
                     } else {
                         need_regrab = false;
