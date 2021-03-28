@@ -95,7 +95,7 @@ namespace ptgrey_reader_nodelet_pkg
         virtual void onInit() {
             // ros::init(argc, argv, "sync_single_reader_nodelet");
 
-            auto nh = this->getPrivateNodeHandle();
+            auto nh = this->getMTPrivateNodeHandle();
             // auto private_nh = getPrivateNodeHandle();
             // ros::NodeHandle nh("sync_single_reader");
             ROS_INFO("Start Sync Single reader");
@@ -218,11 +218,13 @@ namespace ptgrey_reader_nodelet_pkg
 
             trigger_time_vaild = true;
             no_sync_recved = false;
-            ROS_INFO_THROTTLE(1.0, "tri recved align %3.2fms dt %3.2f %3.2fms", (ros::Time::now() - _ref.time_ref).toSec()*1000, from_last*1000, from_last2*1000);
+            if (is_print)
+                ROS_INFO("tri recved align %3.2fms dt %3.2f %3.2fms", (ros::Time::now() - _ref.time_ref).toSec()*1000, from_last*1000, from_last2*1000);
             trigger_time = _ref;
             auto ts = ros::Time::now();
             grab();
-            ROS_INFO_THROTTLE(1.0, "grab time cost %4.2f", (ros::Time::now() - ts).toSec()*1000);
+            if (is_print)
+                ROS_INFO("grab time cost %4.2f", (ros::Time::now() - ts).toSec()*1000);
         }
 
         ros::Time image_ros_time, trigger_ros_time;
@@ -252,10 +254,13 @@ namespace ptgrey_reader_nodelet_pkg
                     
                     FlyCapture2::Error error;
                     FlyCapture2::TimeStamp cam_time;
+                    if (is_print) {
+                        std::cout << "Try to grab" << std::endl;
+                    }
                     camReader->Camera().captureOneImage( error, outImg.image, cam_time );
                     ++imageCnt;
-                    
-                    ROS_INFO_THROTTLE(1.0, "grab only time cost %4.2f", (ros::Time::now() - ts).toSec()*1000);
+                    if (is_print)
+                        ROS_INFO("grab only time cost %4.2f", (ros::Time::now() - ts).toSec()*1000);
 
                     if ( outImg.image.empty( ) )
                     {
@@ -278,6 +283,7 @@ namespace ptgrey_reader_nodelet_pkg
 
                         if (dt_trigger_image_ms + 35 > 15) {
                             ROS_WARN("Image too old %3.2fms, will jump this image", dt_trigger_image_ms);
+                            usleep(5000);
                             continue;
                         } else if (dt_trigger_image_ms + 35 < -15) {
                             //Jump this trigger
