@@ -38,7 +38,7 @@
             sharpness:  0
         </rosparam>
     </node>
-    <!-- <node name="sync_single_reader" pkg="nodelet" type="nodelet"
+    <node name="sync_single_reader" pkg="nodelet" type="nodelet"
         args="load ptgrey_reader_nodelet_pkg/SyncSingleReaderNodelet /$(arg manager)"
         ns="/stereo/right" output="screen">
         <remap from="/image_raw" to="/stereo/right/image_raw" />
@@ -69,5 +69,5 @@
             hue:        30
             sharpness:  0
         </rosparam>
-    </node> -->
+    </node>
 </launch>
