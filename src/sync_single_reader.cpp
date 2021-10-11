@@ -111,8 +111,8 @@ class SyncSingleReader {
         //Dt trigger need to be -30
         //If dt_trigger_image_ms + 35 < -20, than trigger is too old. should jump trigger
         //If dt_trigger_image_ms + 35 > -20, than image is too old. should jump image
-        if (fabs( dt_trigger_image_ms + 35) > 15) {
-            if (dt_trigger_image_ms + 35 < -15) {
+        if (fabs( dt_trigger_image_ms + 35) > 15 || !is_sync) {
+            if (dt_trigger_image_ms + 35 < -15 && is_sync) {
                 //Jump this trigger
                 return;
             } 
