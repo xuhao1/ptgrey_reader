@@ -85,6 +85,10 @@ class SyncSingleReader {
     
     cv_bridge::CvImage outImg;
 
+    void unsync_timer(const ros::TimerEvent & e) {
+        grab();
+    }
+
     void grab() {
     // void grab(const ros::TimerEvent & e) {
         // if (!trigger_time_vaild)
@@ -277,6 +281,8 @@ public:
         if (is_sync) {
             ROS_INFO("Is trigger, subscribe to time reference");
             trigger_time_sub = nh.subscribe("/dji_sdk_1/dji_sdk/trigger_time", 1, &SyncSingleReader::on_time_reference, this, ros::TransportHints().tcpNoDelay());
+        } else {
+            timer = nh.createTimer(ros::Duration(1.0/frameRate), &SyncSingleReader::unsync_timer, this);
         }
         
         if (pub_compressed) {
@@ -292,7 +298,6 @@ public:
 
         std::cout << "[#INFO] Loop start." << ros::ok( ) << std::endl;
 
-        // timer = nh.createTimer(ros::Duration(0.05), &SyncSingleReader::grab, this);
     }
 
     ros::Timer timer;

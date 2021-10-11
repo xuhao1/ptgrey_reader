@@ -1,0 +1,12 @@
+<launch>
+<arg name="bag_path" default="/ssd/stereo_calib.bag" />
+<include file="$(find ptgrey_reader)/launch/stereo.launch" >
+    <arg name="config_path" value="/home/dji/SwarmConfig/camera_config.yaml" />
+    <arg name="is_sync" value="false" />
+    <arg name="is_print" value="false"/>
+    <arg name="rate" value="5"/>
+</include>
+<node pkg="rosbag" type="record" name="rosbag_record_cam"
+    args="record -O $(arg bag_path) /dji_sdk_1/dji_sdk/imu /stereo/left/image_compressed /stereo/right/image_compressed " />
+
+</launch>

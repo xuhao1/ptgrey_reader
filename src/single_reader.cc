@@ -34,7 +34,7 @@ colorToGrey( cv::Mat& image_in, cv::Mat& image_out )
 int
 main( int argc, char** argv )
 {
-    ros::init( argc, argv, "singleReader" );
+    ros::init( argc, argv, "sync_single_reader" );
     ros::NodeHandle nh( "~" );
 
     bool is_pub              = true;
