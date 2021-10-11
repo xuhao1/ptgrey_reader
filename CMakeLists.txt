@@ -3,7 +3,7 @@ project(ptgrey_reader)
 
 set(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CXX_FLAGS "-std=c++11 -march=native ")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -fPIC ")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -fPIC -g")
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -96,10 +96,10 @@ add_executable(single_reader    src/single_reader.cc    src/ptgrey_lib/singleCam
 target_link_libraries( single_reader    ${catkin_LIBRARIES}    ${OpenCV_LIBS}    ${POINTGREY_LIBRARIES} ${LIBUSB_1_LIBRARIES} )
 
 add_library(sync_single_reader_nodelet    src/sync_single_reader_nodelet.cpp    src/ptgrey_lib/singleCamera.cpp    src/ptgrey_lib/singleCameraReader.cpp  src/preprocess/process.cc)
-target_link_libraries( sync_single_reader_nodelet    ${catkin_LIBRARIES}    ${OpenCV_LIBS}    ${POINTGREY_LIBRARIES} ${LIBUSB_1_LIBRARIES} )
+target_link_libraries( sync_single_reader_nodelet    ${catkin_LIBRARIES}    ${OpenCV_LIBS}    ${POINTGREY_LIBRARIES} ${LIBUSB_1_LIBRARIES} dw)
 
 add_executable(sync_single_reader    src/sync_single_reader.cpp    src/ptgrey_lib/singleCamera.cpp    src/ptgrey_lib/singleCameraReader.cpp  src/preprocess/process.cc)
-target_link_libraries( sync_single_reader   ${OpenCV_LIBS}    ${catkin_LIBRARIES}     ${POINTGREY_LIBRARIES} ${LIBUSB_1_LIBRARIES} )
+target_link_libraries( sync_single_reader   ${OpenCV_LIBS}    ${catkin_LIBRARIES}     ${POINTGREY_LIBRARIES} ${LIBUSB_1_LIBRARIES} dw )
 
 add_library(ptgrey_reader  src/multi_reader.cc   src/ptgrey_lib/singleCameraReader.cpp  src/ptgrey_lib/multiCamera.cpp    src/ptgrey_lib/multiCameraReader.cpp  src/preprocess/process.cc src/ptgrey_lib/singleCamera.cpp)
 target_link_libraries(ptgrey_reader    ${catkin_LIBRARIES}    ${OpenCV_LIBS}    ${POINTGREY_LIBRARIES}    ${LIBUSB_1_LIBRARIES}  )

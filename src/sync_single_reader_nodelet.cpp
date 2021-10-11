@@ -16,6 +16,13 @@
 #include <pluginlib/class_list_macros.h>
 
 
+#define BACKWARD_HAS_DW 1
+#include <backward.hpp>
+namespace backward
+{
+    backward::SignalHandling sh;
+}
+
 namespace ptgrey_reader_nodelet_pkg
 {
     class SyncSingleReaderNodelet : public nodelet::Nodelet
@@ -88,7 +95,7 @@ namespace ptgrey_reader_nodelet_pkg
         virtual void onInit() {
             // ros::init(argc, argv, "sync_single_reader_nodelet");
 
-            auto nh = this->getPrivateNodeHandle();
+            auto nh = this->getMTPrivateNodeHandle();
             // auto private_nh = getPrivateNodeHandle();
             // ros::NodeHandle nh("sync_single_reader");
             ROS_INFO("Start Sync Single reader");
@@ -211,65 +218,87 @@ namespace ptgrey_reader_nodelet_pkg
 
             trigger_time_vaild = true;
             no_sync_recved = false;
-            ROS_INFO_THROTTLE(1.0, "tri recved align %3.2fms dt %3.2f %3.2fms", (ros::Time::now() - _ref.time_ref).toSec()*1000, from_last*1000, from_last2*1000);
+            if (is_print)
+                ROS_INFO("tri recved align %3.2fms dt %3.2f %3.2fms", (ros::Time::now() - _ref.time_ref).toSec()*1000, from_last*1000, from_last2*1000);
             trigger_time = _ref;
             auto ts = ros::Time::now();
             grab();
-            ROS_INFO_THROTTLE(1.0, "grab time cost %4.2f", (ros::Time::now() - ts).toSec()*1000);
+            if (is_print)
+                ROS_INFO("grab time cost %4.2f", (ros::Time::now() - ts).toSec()*1000);
         }
-    
+
+        ros::Time image_ros_time, trigger_ros_time;
+        
         void grab() {
         // void grab(const ros::TimerEvent & e) {
             // if (!trigger_time_vaild)
                 // return;
             bool need_regrab = true;
             // int recali
-            while (need_regrab) {
-                auto ts = ros::Time::now();
-                
-                FlyCapture2::Error error;
-                FlyCapture2::TimeStamp cam_time;
-                camReader->Camera().captureOneImage( error, outImg.image, cam_time );
-                ++imageCnt;
-                
-                ROS_INFO_THROTTLE(1.0, "grab only time cost %4.2f", (ros::Time::now() - ts).toSec()*1000);
+            trigger_ros_time = trigger_time.time_ref;
+            auto dt_trigger_image_ms = (trigger_ros_time - image_ros_time).toSec()*1000;
 
-                if ( outImg.image.empty( ) )
-                {
-                    std::cout << "[#INFO] Grabbed no image." << std::endl;
+            //Trigger time 0ms
+            //After 35ms trans...
+            //Image time: 35ms
+            //Dt trigger need to be -30
+            //If dt_trigger_image_ms + 35 < -20, than trigger is too old. should jump trigger
+            //If dt_trigger_image_ms + 35 > -20, than image is too old. should jump image
+            if (fabs( dt_trigger_image_ms + 35) > 15) {
+                if (dt_trigger_image_ms + 35 < -15) {
+                    //Jump this trigger
                     return;
-                }
-                
-                outImg.header.stamp.sec  = cam_time.seconds;
-                outImg.header.stamp.nsec = cam_time.microSeconds * 1000;
-
-                auto image_ros_time = outImg.header.stamp;
-                auto trigger_ros_time = trigger_time.time_ref;
-                auto dt_trigger_image_ms = (trigger_ros_time - image_ros_time).toSec()*1000;
-
-                if (is_sync) {
-                    outImg.header.stamp = tri_header.stamp;
-                    //Still have bugs... that trigger is faster than image, should be slower..
-                    if (is_print)
-                        ROS_INFO("using trigger ts, dt %3.2f ms", dt_trigger_image_ms);
+                } 
+                while (need_regrab) {
+                    auto ts = ros::Time::now();
                     
-                    if (dt_trigger_image_ms > 0) {
-                        ROS_WARN("Image too old, will regrab");
-                        continue;
+                    FlyCapture2::Error error;
+                    FlyCapture2::TimeStamp cam_time;
+                    if (is_print) {
+                        std::cout << "Try to grab" << std::endl;
+                    }
+                    camReader->Camera().captureOneImage( error, outImg.image, cam_time );
+                    ++imageCnt;
+                    if (is_print)
+                        ROS_INFO("grab only time cost %4.2f", (ros::Time::now() - ts).toSec()*1000);
+
+                    if ( outImg.image.empty( ) )
+                    {
+                        std::cout << "[#INFO] Grabbed no image." << std::endl;
+                        return;
+                    }
+                    
+                    outImg.header.stamp.sec  = cam_time.seconds;
+                    outImg.header.stamp.nsec = cam_time.microSeconds * 1000;
+
+                    image_ros_time = outImg.header.stamp;
+                    dt_trigger_image_ms = (trigger_ros_time - image_ros_time).toSec()*1000;
+
+                    if (is_sync) {
+                        outImg.header.stamp = tri_header.stamp;
+                        //Still have bugs... that trigger is faster than image, should be slower..
+                        if (is_print)
+                            ROS_INFO("using trigger ts, dt %3.2f ms", dt_trigger_image_ms);
+                        
+
+                        if (dt_trigger_image_ms + 35 > 15) {
+                            ROS_WARN("Image too old %3.2fms, will jump this image", dt_trigger_image_ms);
+                            usleep(5000);
+                            continue;
+                        } else if (dt_trigger_image_ms + 35 < -15) {
+                            //Jump this trigger
+                            ROS_WARN("Trigger too old %3.2fms, will jump this trigger", dt_trigger_image_ms);
+                            return;
+                        } 
+                        need_regrab = false;
                     } else {
                         need_regrab = false;
                     }
-                    
-                    if (fabs( dt_trigger_image_ms + 32) > 10) {
-                        ROS_WARN("using unexpect trigger ts, dt ros %3.2fms ros-fc %3.2fms", dt_trigger_image_ms, (tri_header.stamp - image_ros_time).toSec()*1000);
-                    }
-
-                    
-                } else {
-                    need_regrab = false;
                 }
+            } else {
+                if ( is_print )
+                    ROS_INFO("Last captured image will be used, dt %3.2f ms", dt_trigger_image_ms);
             }
-
             if ( is_print )
                 std::cout << serialNum << " grabbed image " << imageCnt << std::endl;
 

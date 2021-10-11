@@ -12,6 +12,12 @@
 #include <sensor_msgs/TimeReference.h>
 #include <sensor_msgs/CompressedImage.h>
 
+#define BACKWARD_HAS_DW 1
+#include <backward.hpp>
+namespace backward
+{
+    backward::SignalHandling sh;
+}
 using namespace ros;
 
 class SyncSingleReader {
@@ -84,6 +90,7 @@ class SyncSingleReader {
     }
     
     cv_bridge::CvImage outImg;
+    ros::Time image_ros_time, trigger_ros_time;
 
     void unsync_timer(const ros::TimerEvent & e) {
         grab();
@@ -95,55 +102,67 @@ class SyncSingleReader {
             // return;
         bool need_regrab = true;
         // int recali
-        while (need_regrab) {
-            auto ts = ros::Time::now();
-            
-            FlyCapture2::Error error;
-            FlyCapture2::TimeStamp cam_time;
-            camReader->Camera().captureOneImage( error, outImg.image, cam_time );
-            ++imageCnt;
-            double dt_grab = (ros::Time::now() - ts).toSec() * 1000; 
-            ROS_INFO_THROTTLE(1.0, "grab only time cost %4.2f", dt_grab);
+        trigger_ros_time = trigger_time.time_ref;
+        auto dt_trigger_image_ms = (trigger_ros_time - image_ros_time).toSec()*1000;
 
-            if ( outImg.image.empty( ) )
-            {
-                std::cout << "[#INFO] Grabbed no image." << std::endl;
+        //Trigger time 0ms
+        //After 35ms trans...
+        //Image time: 35ms
+        //Dt trigger need to be -30
+        //If dt_trigger_image_ms + 35 < -20, than trigger is too old. should jump trigger
+        //If dt_trigger_image_ms + 35 > -20, than image is too old. should jump image
+        if (fabs( dt_trigger_image_ms + 35) > 15) {
+            if (dt_trigger_image_ms + 35 < -15) {
+                //Jump this trigger
                 return;
-            }
-            
-            outImg.header.stamp.sec  = cam_time.seconds;
-            outImg.header.stamp.nsec = cam_time.microSeconds * 1000;
-
-            auto image_ros_time = outImg.header.stamp;
-            auto trigger_ros_time = trigger_time.time_ref;
-            auto dt_trigger_image_ms = (trigger_ros_time - image_ros_time).toSec()*1000;
-
-            if (is_sync) {
-                outImg.header.stamp = tri_header.stamp;
-                //Still have bugs... that trigger is faster than image, should be slower..
-                if (is_print)
-                    ROS_INFO("using trigger ts, dt %3.2f ms", dt_trigger_image_ms);
+            } 
+            while (need_regrab) {
+                auto ts = ros::Time::now();
                 
-                if (dt_trigger_image_ms > 0) {
-                    ROS_WARN("Image too old, will regrab");
-                    continue;
-                    //need_regrab = false;
+                FlyCapture2::Error error;
+                FlyCapture2::TimeStamp cam_time;
+                camReader->Camera().captureOneImage( error, outImg.image, cam_time );
+                ++imageCnt;
+                
+                ROS_INFO_THROTTLE(1.0, "grab only time cost %4.2f", (ros::Time::now() - ts).toSec()*1000);
+
+                if ( outImg.image.empty( ) )
+                {
+                    std::cout << "[#INFO] Grabbed no image." << std::endl;
+                    return;
+                }
+                
+                outImg.header.stamp.sec  = cam_time.seconds;
+                outImg.header.stamp.nsec = cam_time.microSeconds * 1000;
+
+                image_ros_time = outImg.header.stamp;
+                dt_trigger_image_ms = (trigger_ros_time - image_ros_time).toSec()*1000;
+
+                if (is_sync) {
+                    outImg.header.stamp = tri_header.stamp;
+                    //Still have bugs... that trigger is faster than image, should be slower..
+                    if (is_print)
+                        ROS_INFO("using trigger ts, dt %3.2f ms", dt_trigger_image_ms);
+                    
+
+                    if (dt_trigger_image_ms + 35 > 15) {
+                        ROS_WARN("Image too old %3.2fms, will jump this image", dt_trigger_image_ms);
+                        usleep(5000);
+                        continue;
+                    } else if (dt_trigger_image_ms + 35 < -15) {
+                        //Jump this trigger
+                        ROS_WARN("Trigger too old %3.2fms, will jump this trigger", dt_trigger_image_ms);
+                        return;
+                    } 
+                    need_regrab = false;
                 } else {
                     need_regrab = false;
                 }
-                
-                if (fabs( dt_trigger_image_ms + dt_grab) > 10) {
-                    ROS_WARN("using unexpect trigger ts, dt ros %3.2fms ros-fc %3.2fms", dt_trigger_image_ms, (tri_header.stamp - image_ros_time).toSec()*1000);
-                } else {
-                    ROS_INFO_THROTTLE(1.0, "Dt ros %3.2fms ros-fc %3.2fms", dt_trigger_image_ms + dt_grab);
-                }
-
-                
-            } else {
-                need_regrab = false;
             }
+        } else {
+            if ( is_print )
+                ROS_INFO("Last captured image will be used, dt %3.2f ms", dt_trigger_image_ms);
         }
-
         if ( is_print )
             std::cout << serialNum << " grabbed image " << imageCnt << std::endl;
 
@@ -176,12 +195,13 @@ class SyncSingleReader {
             if (pub_compressed && imageCompressedPublisher.getNumSubscribers() > 0) {
                 sensor_msgs::CompressedImage _img_compressed;
                 auto ts = ros::Time::now();
-                cv::imencode(".jpg", outImg.image, _img_compressed.data, params);
+                cv::imencode(".jpg", outImg.image, _img_compressed.data);
                 ROS_INFO_THROTTLE(1.0, "Encode cost %4.2f", (ros::Time::now() - ts).toSec()*1000);
                 _img_compressed.header = outImg.header;
                 _img_compressed.format = "jpeg";
                 imageCompressedPublisher.publish( _img_compressed );
             }
+
         }
 
         if ( is_show )
@@ -190,6 +210,7 @@ class SyncSingleReader {
             cv::waitKey( 10 );
         }
     }
+
 public:
     SyncSingleReader(ros::NodeHandle & _nh):
         nh(_nh)
